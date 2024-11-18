@@ -24,9 +24,10 @@ app.use(cookieParser());
 //importing routes
 import userRouter from "./routes/user.routes.js"
 
-//Routes declaration
+/* Routes declaration
+api/v1/users is a prefix for routes
+After using this we don't have to declare base route again and again
+*/
 app.use("/api/v1/users", userRouter);
-
-// https://localhost:8000/api/v1/users/register
 
 export default app;

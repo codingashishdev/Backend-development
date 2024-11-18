@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
             required: true,
             unique: true,
             lowercase: true,
-            trim: true, //space from left and right will be trimmed
+            trim: true, //trimming the spaces from both sides
             index: true
         },
         email: {
@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre('save', async function (next) {
     if (!this.isModified("password")) return next();
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
