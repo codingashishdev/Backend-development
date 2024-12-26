@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js"
-import { constrainedMemory } from "process";
 
 const DBConnect = async () => {
     try {

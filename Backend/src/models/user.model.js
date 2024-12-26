@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-        coverimage: {
+        coverImage: {
             type: String
         },
         watchHistory: [
@@ -44,28 +44,22 @@ const userSchema = new mongoose.Schema(
         },
         refreshToken: {
             type: String,
-        },
-        createdAt: {
-            type: Date,
-            required: true
-        },
-        updatedAt: {
-            type: Date,
-            required: true
         }
-    }, { timestamps: true }
-)
+    }, { timestamps: true });
 
+//it's used to hash the user's password before saving the user document to the database.
 userSchema.pre('save', async function (next) {
     if (!this.isModified("password")) return next();
     this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
+//checking if the password given by the user is matching with the password that user had given while registering
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
+//generating the access token and returning that token
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign({
         _id: this._id,
@@ -79,6 +73,8 @@ userSchema.methods.generateAccessToken = function () {
         }
     )
 }
+
+//generating refresh token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign({
         _id: this._id,
