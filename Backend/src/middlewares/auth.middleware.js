@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { User } from "../routes/user.model.js";
+import { User } from "../models/user.model.js";
 
-const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
         //"Bearer " replaced with "" and only token will be remain
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
