@@ -290,11 +290,8 @@ const updateAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Avatar file is missing");
     }
 
-    //TODO: Delete old image: assignment
-
     const oldUser = await User.findById(req.user?._id);
     const oldAvatarUrl = oldUser.avatar;
-
     const avatar = await uploadOnCloudinary(avatarLocalPath);
 
     if (!avatar.url) {
@@ -350,6 +347,44 @@ const updateCoverImage = asyncHandler(async (req, res) => {
         )
 });
 
-export { loginUser, registerUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateCoverImage, updateAvatar }
+const getUserProfile = asyncHandler(async (req, res) => {
+    const username = req.params;
 
+    if (!username?.trim()) {
+        throw new ApiError(400, "username is missing");
+    }
 
+    // const user = await User.findOne({
+    //     username: username
+    // }).select("-password");
+
+    // if (!user) {
+    //     throw new ApiError(400, "user does not found");
+    // }
+
+    await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        }
+    ])
+})
+
+export { loginUser, registerUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateCoverImage, updateAvatar, getUserProfile }
