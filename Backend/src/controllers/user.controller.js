@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { jwt } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -362,7 +362,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     //     throw new ApiError(400, "user does not found");
     // }
 
-    await User.aggregate([
+    const channel = await User.aggregate([
         {
             $match: {
                 username: username?.toLowerCase()
@@ -383,8 +383,49 @@ const getUserProfile = asyncHandler(async (req, res) => {
                 foreignField: "subscriber",
                 as: "subscribedTo"
             }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    //check if the current user is the one of the subscribers
+                    if: { $in: [req.user?.id, "$subscribers.subscriber"] },
+                    then: true,
+                    else: false
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelSubscribedToCount: 1,
+                isSubscribed: 1,
+                coverImage: 1,
+                avatar: 1,
+                email: 1
+            }
         }
     ])
+
+    if (channel?.length == 0) {
+        throw new ApiError(404, "Channel does not exists");
+    }
+
+    //channel[0] meaning the id is being returned
+    return res
+        .status(200).
+        json(
+            new ApiResponse(200, channel[0], "User channel details fetched successfully")
+        )
 })
+
+// console.log(channel);
 
 export { loginUser, registerUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateCoverImage, updateAvatar, getUserProfile }
