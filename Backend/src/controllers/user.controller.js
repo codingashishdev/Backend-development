@@ -349,7 +349,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-    const username = req.params;
+    const { username } = req.params;
 
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing");
