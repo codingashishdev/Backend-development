@@ -149,7 +149,40 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    //TODO: delete video
+    if (!videoId) {
+        throw new ApiError(400, 'which video is to be deleted is not given')
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(videoId)
+
+    if (!deletedVideo) {
+        throw new ApiError(400, "Something went wrong while deleting video");
+    }
+
+    const deleteVideoFile = deletedVideo.videoFile
+
+    if (!deleteVideoFile) {
+        throw new ApiError(400, "video file is required to be deleted")
+    }
+
+    const deleteThumbnailFile = deletedVideo.thumbnail
+
+    if (!deleteThumbnailFile) {
+        throw new ApiError(400, "thumbnail file is required to be deleted")
+    }
+
+    const deletedVideoFromCloudinary = await deleteFromCloudinary(deleteVideoFile);
+    if (!deletedVideoFromCloudinary) {
+        throw new ApiError(400, "video deletion failed")
+    }
+    const deletedThumbnailFromCloudinary = await deleteFromCloudinary(deleteThumbnailFile)
+    if (!deletedThumbnailFromCloudinary) {
+        throw new ApiError(400, "thumbnail deletion failed");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "video deleted successfully"))
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
