@@ -187,6 +187,21 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
+    const video = await Video.findById(videoId);
+    if (video.isPublished == !(video.isPublished)) {
+        video.isPublished = true;
+    }
+    else {
+        video.isPublished = false;
+    }
+    // if (video.isPublished == true) {
+    //     video.isPublished = false;
+    // }
+    // else {
+    //     video.isPublished = true;
+    // }
+
+    return res.status(200).json(new ApiResponse(200, {}, "Published status changed"))
 });
 
 export {
