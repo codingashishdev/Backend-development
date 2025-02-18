@@ -33,7 +33,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
         throw new ApiError("Error while getting channel subscribers")
     }
 
-    const totalLikes = await Like.countDocuments({ video })
+    const totalLikes = await Like.countDocuments({  video: Video })
 
     if (!totalLikes) {
         throw new ApiError(400, "Error while fetching total likes");
