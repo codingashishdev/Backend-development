@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId, mongo } from "mongoose"
+import mongoose, {isValidObjectId}  from "mongoose"
 import { Tweet } from "../models/tweet.model.js"
 import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
@@ -25,29 +25,26 @@ const createTweet = asyncHandler(async (req, res) => {
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-    
-    if (!userId) {
-        throw new ApiError(400, "userId is required")
-    }
-
-    if (!mongoose.Types.isValidObjectId(userId)) {
-        throw new ApiError(400, "A valid objectId has not been given")
-    }
+    const userId = req._id
 
     const userTweets = await Tweet.find({
         owner: userId
     })
 
-    if (!userTweets) {
+    if(!userTweets) {
         throw new ApiError(400, "Error while fetching user tweets")
     }
 
-    return res.status(200).json(new ApiResponse(200, {}, "user tweets fetched successfully"))
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, [userTweets], "user tweets fetched successfully")
+    )
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
-    const { updatedContent, tweetId } = req.body
+    const { tweetId } = req.params;
+    const { updatedContent } = req.body
 
     if (!updatedContent || !tweetId) {
         throw new ApiError(400, "updatedContent and tweetId are required")
@@ -71,7 +68,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    const { tweetId } = req.body;
+    const { tweetId} = req.body;
 
     if (!tweetId) {
         throw new ApiError(400, "tweetId is required")
