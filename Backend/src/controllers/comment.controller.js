@@ -3,19 +3,19 @@ import { Comment } from "../models/comment.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
 
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    const { page = 1, limit = 10 } = req.query
 
     if (!videoId) {
         throw new ApiError(400, "videoId is required")
     }
 
-    if (!mongoose.Types.isValidObjectId(videoId)) {
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "valid objectId is not given")
     }
-
-    const { page = 1, limit = 10 } = req.query
 
     if (page < 1 || limit < 1) {
         throw new ApiError(400, "valid page and limit are required")
@@ -26,10 +26,10 @@ const getVideoComments = asyncHandler(async (req, res) => {
             $match: { video: videoId }
         },
         {
-            $skip: (page - 1) * limit
-        },
-        {
-            $limit: limit
+            $project: {
+                $limit: limit,
+                $skip: (page - 1) * limit
+            }
         }
     ])
 
@@ -39,19 +39,22 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 const addComment = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
     const { commentContent } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid videoId");
+    }
 
     if (!commentContent?.trim()) {
         throw new ApiError(400, "comment content is required")
     }
 
-    const videoId = req.body._id
-
     if (!videoId) {
         throw new ApiError(400, "videoId is required")
     }
 
-    const comment = await Comment.findByIdAndUpdate(
+    const comment = await Comment.findOneAndUpdate(
         {
             video: videoId
         },
@@ -60,16 +63,16 @@ const addComment = asyncHandler(async (req, res) => {
                 content: commentContent
             }
         },
-        { new: true }
+        { new: true, upsert: true }
     )
 
     if (!comment) {
-        throw new ApiError(400, "Error while adding comment")
+        throw new ApiError(401, "Something went while adding comment")
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, "comment added successfully"))
+        .json(new ApiResponse(200, comment, "comment added successfully"))
 })
 
 const updateComment = asyncHandler(async (req, res) => {
@@ -79,7 +82,7 @@ const updateComment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "updated content is required")
     }
 
-    const { videoId } = req.body._id
+    const { videoId } = req.params
 
     if (!videoId) {
         throw new ApiError(400, "videoId is required")
@@ -97,16 +100,6 @@ const updateComment = asyncHandler(async (req, res) => {
         },
         { new: true }
     )
-
-    // const updatedComment = await Comment.findByIdAndUpdate(
-    //     { video: videoId },
-    //     {
-    //         $set: {
-    //             content: updatedContentForComment
-    //         }
-    //     },
-    //     { new: true }
-    // )
 
     return res
         .status(200)
